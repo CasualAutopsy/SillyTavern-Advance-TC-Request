@@ -1,0 +1,9 @@
+#tcrequest_settings {
+    display: flex;
+    flex-direction: column;
+}
+
+#tcrequest_settings textarea {
+    font-size: calc(var(--mainFontSize) * 0.9);
+    line-height: 1.2;
+}
