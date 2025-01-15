@@ -84,12 +84,19 @@ function registerEvents() {
 
 // Callback
 
-async function tcEphemeralCallback(args,value) {
-    let dict = JSON.parse(args.dict);
-    //let samp = args.sampler;
-    
-    Object.assign(ephemeral_settings, dict);
+async function tcEphemeralCallback(args, value) {
+    if (args.dict !== undefined) {
+        let dict = JSON.parse(args.dict);
+        Object.assign(ephemeral_settings, dict);
+    }
+    if (args.sampler !== undefined && value !== undefined) {
+        let samp = args.sampler;
+        let val = value;
 
+        Object.assign(ephemeral_settings, {
+            [samp]: val
+        });
+    }
     return ephemeral_settings; 
 }
 
@@ -107,14 +114,14 @@ SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         }),
         SlashCommandNamedArgument.fromProps({
             name: 'sampler',
-            description: 'String of sampler setting variable name(Not implemented)',
+            description: 'String of sampler setting variable name',
             typeList: [ARGUMENT_TYPE.STRING],
             isRequired: false,
         }),
     ],
     unnamedArgumentList: [
         SlashCommandArgument.fromProps({
-            description: 'sampler setting value(Not implemented)',
+            description: 'sampler setting value',
             typeList: [ARGUMENT_TYPE.NUMBER,ARGUMENT_TYPE.STRING,ARGUMENT_TYPE.BOOLEAN,ARGUMENT_TYPE.LIST,ARGUMENT_TYPE.DICTIONARY],
             isRequired: false,
         }),
