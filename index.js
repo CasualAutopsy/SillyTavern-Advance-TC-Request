@@ -1,49 +1,29 @@
-import { extension_settings } from '../../../extensions.js';
-import {
-    eventSource,
-    event_types,
-    saveSettingsDebounced,
-} from '../../../../script.js';
+import {extension_settings} from '../../../extensions.js';
+import {event_types, eventSource, saveSettingsDebounced,} from '../../../../script.js';
 
-import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
-import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
-
-import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../slash-commands/SlashCommandArgument.js';
-
-import { SlashCommandEnumValue } from '../../../slash-commands/SlashCommandEnumValue.js';
-
-import { uuidv4 } from '../../../utils.js';
+import {uuidv4} from '../../../utils.js';
 
 const extensionName = 'SillyTavern-Advance-TC-Request';
 const extensionFolder = `scripts/extensions/third-party/${extensionName}`;
 
-let ephemeral_settings = {};
+async function loadSettings()
+{
+    if ( ! extension_settings.adv_tc )
+        extension_settings.adv_tc = {
+            "tc_json": {
+                "timestamp": Date.now(),
+                "request_id": uuidv4(),
+            },
+            "tc_enabled": false,
+            "tc_override": false
+        };
 
-const tcrequest_settings = {
-    'tc_array':{
-        'timestamp': Date.now(),
-        'request_id': uuidv4(),
-    },
-};
 
+    saveSettingsDebounced();
 
-
-let settings = extension_settings[extensionName];
-
-//Settings loader
-
-async function loadSettings() {
-    extension_settings[extensionName] = extension_settings[extensionName] || {};
-
-    if (Object.keys(extension_settings[extensionName]).length === 0) {
-        Object.assign(
-            extension_settings[extensionName],
-            tcrequest_settings,
-        );
-    }
-    settings = extension_settings[extensionName];
-
-    $('#tcrequest_input').val(JSON.stringify(settings.tc_array)).trigger('input');
+    $('#tcrequest_input').val(JSON.stringify(extension_settings.adv_tc.tc_json)).trigger('input');
+    $('#tcrequest_enabled').prop('checked', extension_settings.adv_tc.tc_enabled || false);
+    $('#tcrequest_override').prop('checked', extension_settings.adv_tc.tc_override || false);
 }
 
 //Listener Functions
@@ -53,103 +33,59 @@ function tcReqSaveClick() {
         try {
             const value = $('#tcrequest_input').val();
 
-            settings.tc_array = JSON.parse(value);
+            extension_settings.adv_tc.tc_json = JSON.parse(value);
 
             saveSettingsDebounced();
         }
         catch {
-            console.log('[Advance TC Request]: Invalid Array');
-            return;
+            console.log('[Advance TC Request]: Invalid JSON');
         }
     };
 }
 
 
 function setTCSettings(args) {
-    Object.assign(args, settings.tc_array);
+    let key_keep = [
+        "prompt",         "stream",            "num_ctx",
+        "num_predict",    "n_predict",         "api_server",
+        "api_type",       "truncation_length", "max_tokens",
+        "max_new_tokens"
+    ]
 
-    Object.assign(args, ephemeral_settings);
-    ephemeral_settings = {}
+    let new_tc_req = {}
+
+    if (extension_settings.adv_tc.tc_enabled !== true) {
+        return;
+    }
+
+    if (extension_settings.adv_tc.tc_override) {
+        for (const key in args) {
+            if (!key_keep.includes(key)) {
+                delete args[key];
+            }
+        }
+    }
+
+    Object.assign(args, extension_settings.adv_tc.tc_json);
 }
 
 //Listeners
 
 function registerListeners() {
     $('#tcrequest_save').off('click').on('click', tcReqSaveClick());
+    $('#tcrequest_enabled').on('click', function() {
+        extension_settings.adv_tc.tc_enabled = $('#tcrequest_enabled').prop('checked');
+        saveSettingsDebounced();
+    });
+    $('#tcrequest_override').on('click', function() {
+        extension_settings.adv_tc.tc_override = $('#tcrequest_override').prop('checked');
+        saveSettingsDebounced();
+    });
 }
 
 function registerEvents() {
     eventSource.on(event_types.TEXT_COMPLETION_SETTINGS_READY, setTCSettings);
 }
-
-// Callback
-
-async function tcEphemeralCallback(args, value) {
-    if (args.dict !== undefined) {
-        let dict = JSON.parse(args.dict);
-        Object.assign(ephemeral_settings, dict);
-    }
-    if (args.sampler !== undefined && value !== undefined) {
-        let samp = args.sampler;
-        let val = value;
-
-        Object.assign(ephemeral_settings, {
-            [samp]: val
-        });
-    }
-    return ephemeral_settings; 
-}
-
-// Slash Command
-
-SlashCommandParser.addCommandObject(SlashCommand.fromProps({
-    name: 'tc-ephemeral',
-    callback: tcEphemeralCallback,
-    namedArgumentList: [
-        SlashCommandNamedArgument.fromProps({
-            name: 'dict',
-            description: 'Dictionary containing sampler setting changes',
-            typeList: [ARGUMENT_TYPE.DICTIONARY],
-            isRequired: false,
-        }),
-        SlashCommandNamedArgument.fromProps({
-            name: 'sampler',
-            description: 'String of sampler setting variable name',
-            typeList: [ARGUMENT_TYPE.STRING],
-            isRequired: false,
-        }),
-    ],
-    unnamedArgumentList: [
-        SlashCommandArgument.fromProps({
-            description: 'sampler setting value',
-            typeList: [ARGUMENT_TYPE.NUMBER,ARGUMENT_TYPE.STRING,ARGUMENT_TYPE.BOOLEAN,ARGUMENT_TYPE.LIST,ARGUMENT_TYPE.DICTIONARY],
-            isRequired: false,
-        }),
-    ],
-    returns:'Current ephemeral TC Dictionary',
-    helpString: `
-    <div>
-        Set sampler settings that revert back after a generation.
-    </div>
-    <div>
-        The most recent usage of this cmd wil not remove changes of the previous.
-    </div>
-    <div>
-        The order of importance from highest to lowest is: <strong>Ephemeral TC</strong> > <strong>Advance TC</strong> > <strong>TC Preset</strong>.
-    </div>
-    <div>
-        <strong>Example:</strong>
-        <ul>
-            <li>
-                <pre><code>/tc-ephemeral sampler="temperature" 1.3</code></pre>
-            </li>
-            <li>
-                <pre><code>/tc-ephemeral dict={"min_p":0.025,"top_k":120}</code></pre>
-            </li>
-        </ul>
-    </div>
-    `,
-}));
 
 jQuery(async () => {
     // JQuery settings panel
