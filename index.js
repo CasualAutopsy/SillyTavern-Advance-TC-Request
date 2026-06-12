@@ -1,15 +1,20 @@
-import {extension_settings} from '../../../extensions.js';
-import {event_types, eventSource, saveSettingsDebounced,} from '../../../../script.js';
+// @ts-nocheck
+const {
+    extensionSettings,
+    eventSource, eventTypes,
+    saveSettingsDebounced,
+    uuidv4
+} = SillyTavern.getContext()
 
-import {uuidv4} from '../../../utils.js';
+const YAML = SillyTavern.libs.yaml
 
 const extensionName = 'SillyTavern-Advance-TC-Request';
 const extensionFolder = `scripts/extensions/third-party/${extensionName}`;
 
 async function loadSettings()
 {
-    if ( ! extension_settings.adv_tc )
-        extension_settings.adv_tc = {
+    if ( ! extensionSettings.adv_tc )
+        extensionSettings.adv_tc = {
             "tc_json": {
                 "timestamp": Date.now(),
                 "request_id": uuidv4(),
@@ -21,9 +26,9 @@ async function loadSettings()
 
     saveSettingsDebounced();
 
-    $('#tcrequest_input').val(JSON.stringify(extension_settings.adv_tc.tc_json)).trigger('input');
-    $('#tcrequest_enabled').prop('checked', extension_settings.adv_tc.tc_enabled || false);
-    $('#tcrequest_override').prop('checked', extension_settings.adv_tc.tc_override || false);
+    $('#tcrequest_input').val(YAML.stringify(extensionSettings.adv_tc.tc_json)).trigger('input');
+    $('#tcrequest_enabled').prop('checked', extensionSettings.adv_tc.tc_enabled || false);
+    $('#tcrequest_override').prop('checked', extensionSettings.adv_tc.tc_override || false);
 }
 
 //Listener Functions
@@ -33,7 +38,7 @@ function tcReqSaveClick() {
         try {
             const value = $('#tcrequest_input').val();
 
-            extension_settings.adv_tc.tc_json = JSON.parse(value);
+            extensionSettings.adv_tc.tc_json = YAML.parse(value);
 
             saveSettingsDebounced();
         }
@@ -54,11 +59,11 @@ function setTCSettings(args) {
 
     let new_tc_req = {}
 
-    if (extension_settings.adv_tc.tc_enabled !== true) {
+    if (extensionSettings.adv_tc.tc_enabled !== true) {
         return;
     }
 
-    if (extension_settings.adv_tc.tc_override) {
+    if (extensionSettings.adv_tc.tc_override) {
         for (const key in args) {
             if (!key_keep.includes(key)) {
                 delete args[key];
@@ -66,7 +71,7 @@ function setTCSettings(args) {
         }
     }
 
-    Object.assign(args, extension_settings.adv_tc.tc_json);
+    Object.assign(args, extensionSettings.adv_tc.tc_json);
 }
 
 //Listeners
@@ -74,17 +79,17 @@ function setTCSettings(args) {
 function registerListeners() {
     $('#tcrequest_save').off('click').on('click', tcReqSaveClick());
     $('#tcrequest_enabled').on('click', function() {
-        extension_settings.adv_tc.tc_enabled = $('#tcrequest_enabled').prop('checked');
+        extensionSettings.adv_tc.tc_enabled = $('#tcrequest_enabled').prop('checked');
         saveSettingsDebounced();
     });
     $('#tcrequest_override').on('click', function() {
-        extension_settings.adv_tc.tc_override = $('#tcrequest_override').prop('checked');
+        extensionSettings.adv_tc.tc_override = $('#tcrequest_override').prop('checked');
         saveSettingsDebounced();
     });
 }
 
 function registerEvents() {
-    eventSource.on(event_types.TEXT_COMPLETION_SETTINGS_READY, setTCSettings);
+    eventSource.on(eventTypes.TEXT_COMPLETION_SETTINGS_READY, setTCSettings);
 }
 
 jQuery(async () => {
@@ -100,5 +105,5 @@ jQuery(async () => {
 
     // Load settings
     loadSettings();
-    
+
 });
