@@ -3,10 +3,9 @@
     "loading_order": 1998,
     "requires": [],
     "optional": [],
-    "js": "index.js",
-    "css": "style.css",
-    "author": "CasualAutopsy",
-    "version": "2.1.0",
+    "js": "dist/index.js",
+    "author": "EquinoxPsychosis",
+    "version": "2.2.0",
     "homePage": "https://github.com/CasualAutopsy/SillyTavern-Advance-TC-Request",
     "auto_update": false
 }
