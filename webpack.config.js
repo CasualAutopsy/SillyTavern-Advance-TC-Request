@@ -11,7 +11,7 @@ export default {
         filename: 'index.js',
     },
     resolve: {
-        extensions: ['.ts', '.js', '.html'],
+        extensions: ['.ts', '.js'],
     },
     module: {
         rules: [
