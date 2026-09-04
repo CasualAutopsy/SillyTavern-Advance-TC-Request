@@ -2,7 +2,7 @@
   "name": "sillytavern-advance-tc-request",
   "description": "An advance way to set up samplers, especially new ones without having to wait for ST to update.",
   "author": "EquinoxPsychosis",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "private": true,
   "type": "module",
   "scripts": {

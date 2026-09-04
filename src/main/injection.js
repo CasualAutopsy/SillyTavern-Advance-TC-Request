@@ -6,7 +6,7 @@ import {
 let show_warning = true;
 
 /**
- * @typedef {import('../../../../custom-request.js').TextCompletionPayload} TextCompletionPayload
+ * @typedef {import('../../../../../custom-request.js').TextCompletionPayload} TextCompletionPayload
  */
 
 /**
@@ -21,6 +21,7 @@ export function setTCSettings(args) {
         "api_type",       "truncation_length", "max_tokens",
         "max_new_tokens"
     ]
+
 
     if (extensionSettings.adv_tc.tc_enabled !== true) {
         return;
@@ -38,11 +39,13 @@ export function setTCSettings(args) {
         Object.assign(args, YAML.parse(extensionSettings.adv_tc.tc_payload));
 
         if (!show_warning) {
+            // @ts-expect-error - Lack of proper method typedef.
             toastr.success('[Adv. TC Req.] The YAML is now correct. Samplers will be injected.')
             show_warning = true;
         }
     } catch {
         if (show_warning) {
+            // @ts-expect-error - Lack of proper method typedef.
             toastr.warn('[Adv. TC Req.] The request YAML is malformed. Sampler injection will be skipped.');
             show_warning = false;
         }

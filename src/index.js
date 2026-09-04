@@ -1,5 +1,6 @@
 import { loadSettings } from './main/settings.js';
 import { registerEvents, registerListeners } from './main/events.js';
+import { initSlashCMDs } from './main/cmds.js';
 
 import './ui/settings.css';
 import ext_settingsMenu from './ui/settings.html';
@@ -15,4 +16,6 @@ jQuery(async () => {
 
     registerListeners();
     registerEvents();
+
+    initSlashCMDs();
 });
